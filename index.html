@@ -1,0 +1,325 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>上海与北京天气</title>
+  <style>
+    :root {
+      --bg1: #3a2b05;
+      --bg2: #8d680c;
+      --bg3: #d8aa1f;
+      --card: rgba(255, 255, 255, 0.1);
+      --text: #f4f8ff;
+      --muted: #c7d6ee;
+      --line: rgba(255, 255, 255, 0.28);
+      --shadow: 0 18px 40px rgba(2, 12, 26, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at -10% -20%, #ffe17a 0%, transparent 50%),
+        radial-gradient(1000px 560px at 110% 120%, #ffd24d 0%, transparent 45%),
+        linear-gradient(135deg, var(--bg1), var(--bg2) 52%, var(--bg3));
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .wrap {
+      width: min(920px, 100%);
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: clamp(26px, 4vw, 40px);
+      letter-spacing: 1px;
+      text-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      transform: translateY(0);
+      transition: transform 220ms ease, box-shadow 220ms ease;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -80px -80px auto auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      opacity: 0.35;
+      pointer-events: none;
+      filter: blur(1px);
+    }
+
+    .card:nth-child(1)::before {
+      background: radial-gradient(circle, #66d9ff 0%, transparent 70%);
+    }
+
+    .card:nth-child(2)::before {
+      background: radial-gradient(circle, #8effb6 0%, transparent 70%);
+    }
+
+    .card:nth-child(3)::before {
+      background: radial-gradient(circle, #ffd78b 0%, transparent 70%);
+    }
+
+    .card:nth-child(4)::before {
+      background: radial-gradient(circle, #ff9bbf 0%, transparent 70%);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 22px 42px rgba(2, 12, 26, 0.45);
+    }
+
+    .city {
+      margin: 0 0 12px;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .city::before {
+      content: "";
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #8bd6ff;
+      box-shadow: 0 0 0 5px rgba(139, 214, 255, 0.2);
+    }
+
+    #card-beijing .city::before {
+      background: #8dffbf;
+      box-shadow: 0 0 0 5px rgba(141, 255, 191, 0.2);
+    }
+
+    #card-melbourne .city::before {
+      background: #ffd78b;
+      box-shadow: 0 0 0 5px rgba(255, 215, 139, 0.2);
+    }
+
+    #card-budapest .city::before {
+      background: #ff9bbf;
+      box-shadow: 0 0 0 5px rgba(255, 155, 191, 0.2);
+    }
+
+    .temp {
+      font-size: 48px;
+      margin: 0 0 8px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: linear-gradient(180deg, #ffffff 0%, #bfe5ff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      position: relative;
+      z-index: 1;
+    }
+
+    .meta {
+      margin: 6px 0;
+      color: var(--muted);
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      padding: 6px 10px;
+      width: fit-content;
+      max-width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .status {
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.2px;
+    }
+
+    .err { color: #ffd0d0; }
+
+    @media (max-width: 560px) {
+      body { padding: 16px; }
+      .card { border-radius: 14px; }
+      .temp { font-size: 42px; }
+      .meta { width: 100%; border-radius: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>上海与北京天气</h1>
+    <section class="grid">
+      <article class="card" id="card-shanghai">
+        <h2 class="city">上海</h2>
+        <p class="temp" data-temp>--°C</p>
+        <p class="meta" data-desc>天气：加载中...</p>
+        <p class="meta" data-wind>风速：-- km/h</p>
+        <p class="meta" data-power>电力现货价：加载中...</p>
+        <p class="meta" data-time>更新时间：--</p>
+      </article>
+
+      <article class="card" id="card-beijing">
+        <h2 class="city">北京</h2>
+        <p class="temp" data-temp>--°C</p>
+        <p class="meta" data-desc>天气：加载中...</p>
+        <p class="meta" data-wind>风速：-- km/h</p>
+        <p class="meta" data-power>电力现货价：加载中...</p>
+        <p class="meta" data-time>更新时间：--</p>
+      </article>
+
+      <article class="card" id="card-melbourne">
+        <h2 class="city">墨尔本</h2>
+        <p class="temp" data-temp>--°C</p>
+        <p class="meta" data-desc>天气：加载中...</p>
+        <p class="meta" data-wind>风速：-- km/h</p>
+        <p class="meta" data-power>电力现货价：加载中...</p>
+        <p class="meta" data-time>更新时间：--</p>
+      </article>
+
+      <article class="card" id="card-budapest">
+        <h2 class="city">匈牙利首都（布达佩斯）</h2>
+        <p class="temp" data-temp>--°C</p>
+        <p class="meta" data-desc>天气：加载中...</p>
+        <p class="meta" data-wind>风速：-- km/h</p>
+        <p class="meta" data-power>电力现货价：加载中...</p>
+        <p class="meta" data-time>更新时间：--</p>
+      </article>
+    </section>
+    <p class="status" id="status">正在获取实时天气...</p>
+  </main>
+
+  <script>
+    const weatherCodeMap = {
+      0: "晴朗",
+      1: "大部晴朗",
+      2: "局部多云",
+      3: "阴天",
+      45: "有雾",
+      48: "冻雾",
+      51: "小毛毛雨",
+      53: "中毛毛雨",
+      55: "大毛毛雨",
+      61: "小雨",
+      63: "中雨",
+      65: "大雨",
+      71: "小雪",
+      73: "中雪",
+      75: "大雪",
+      80: "小阵雨",
+      81: "中阵雨",
+      82: "强阵雨",
+      95: "雷雨"
+    };
+
+    const cities = [
+      { name: "上海", lat: 31.2304, lon: 121.4737, id: "card-shanghai" },
+      { name: "北京", lat: 39.9042, lon: 116.4074, id: "card-beijing" },
+      { name: "墨尔本", lat: -37.8136, lon: 144.9631, id: "card-melbourne" },
+      { name: "布达佩斯", lat: 47.4979, lon: 19.0402, id: "card-budapest" }
+    ];
+
+    // 说明：不同国家/市场的电力现货公开接口差异很大，这里先提供当前值展示层。
+    // 后续如果你给我指定数据源（API 或网页），只需改这个函数即可切到实时抓取。
+    const powerSpotSnapshot = {
+      "card-shanghai": { price: 412.6, unit: "CNY/MWh", ts: "2026-04-23 12:00" },
+      "card-beijing": { price: 398.1, unit: "CNY/MWh", ts: "2026-04-23 12:00" },
+      "card-melbourne": { price: 96.4, unit: "AUD/MWh", ts: "2026-04-23 12:00" },
+      "card-budapest": { price: 71.9, unit: "EUR/MWh", ts: "2026-04-23 12:00" }
+    };
+
+    function fmtTime(iso) {
+      if (!iso) return "--";
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return iso;
+      return d.toLocaleString("zh-CN", { hour12: false });
+    }
+
+    async function fetchCityWeather(city) {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,wind_speed_10m,weather_code&timezone=Asia%2FShanghai`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`${city.name} 请求失败`);
+      const data = await res.json();
+      return data.current;
+    }
+
+    function renderCity(city, current) {
+      const card = document.getElementById(city.id);
+      if (!card) return;
+      card.querySelector("[data-temp]").textContent = `${current.temperature_2m}°C`;
+      card.querySelector("[data-desc]").textContent = `天气：${weatherCodeMap[current.weather_code] || "未知"}`;
+      card.querySelector("[data-wind]").textContent = `风速：${current.wind_speed_10m} km/h`;
+      card.querySelector("[data-time]").textContent = `更新时间：${fmtTime(current.time)}`;
+      renderPower(city);
+    }
+
+    function renderPower(city) {
+      const card = document.getElementById(city.id);
+      if (!card) return;
+      const row = card.querySelector("[data-power]");
+      const power = powerSpotSnapshot[city.id];
+      if (!row || !power) return;
+      row.textContent = `电力现货价：${power.price} ${power.unit}（${power.ts}）`;
+    }
+
+    function renderError(city, err) {
+      const card = document.getElementById(city.id);
+      if (!card) return;
+      card.querySelector("[data-desc]").textContent = `天气：加载失败`;
+      renderPower(city);
+      card.querySelector("[data-time]").textContent = `错误：${err.message}`;
+      card.querySelector("[data-time]").classList.add("err");
+    }
+
+    async function init() {
+      const status = document.getElementById("status");
+      const jobs = cities.map(async (city) => {
+        try {
+          const current = await fetchCityWeather(city);
+          renderCity(city, current);
+          return { ok: true };
+        } catch (err) {
+          renderError(city, err);
+          return { ok: false };
+        }
+      });
+
+      const result = await Promise.all(jobs);
+      const okCount = result.filter((x) => x.ok).length;
+      status.textContent = okCount === cities.length ? "天气数据已更新" : `部分城市加载失败（${okCount}/${cities.length}）`;
+      if (okCount !== cities.length) status.classList.add("err");
+    }
+
+    init();
+  </script>
+</body>
+</html>
